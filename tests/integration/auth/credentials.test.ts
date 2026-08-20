@@ -13,7 +13,7 @@ import {
 const databaseUrl = process.env.DATABASE_URL;
 const runWithDatabase = databaseUrl ? describe : describe.skip;
 const testRunId = randomUUID();
-const usernamePrefix = `task-6-auth-${testRunId}`;
+const usernamePrefix = `TASK-6-AUTH-${testRunId.toUpperCase()}`;
 const validPassword = "  preserved password characters  ";
 
 runWithDatabase("credentials authentication", () => {
@@ -56,10 +56,7 @@ runWithDatabase("credentials authentication", () => {
         passwordHash: supportedPasswordHash,
         traineeId,
         roles: {
-          create: [
-            { role: { connect: { code: "MENTOR" } } },
-            { role: { connect: { code: "TRAINEE" } } },
-          ],
+          create: [{ role: { connect: { code: "TRAINEE" } } }],
         },
       },
     });
@@ -104,7 +101,7 @@ runWithDatabase("credentials authentication", () => {
     await prisma.$disconnect();
   });
 
-  it("authenticates an enabled normalized employee ID with every role and trainee claim", async () => {
+  it("authenticates an enabled normalized employee ID with its trainee claim", async () => {
     const result = await authorizeCredentials({
       employeeId: `  ${enabledUsername}  `,
       password: validPassword,
@@ -113,7 +110,7 @@ runWithDatabase("credentials authentication", () => {
     expect(result).toEqual({
       id: enabledUserId,
       employeeId: enabledUsername,
-      roles: ["MENTOR", "TRAINEE"],
+      roles: ["TRAINEE"],
       traineeId,
       enabled: true,
     });
@@ -159,7 +156,7 @@ runWithDatabase("credentials authentication", () => {
     expect(token).toEqual({
       sub: enabledUserId,
       employeeId: enabledUsername,
-      roles: ["MENTOR", "TRAINEE"],
+      roles: ["TRAINEE"],
       traineeId,
       enabled: true,
     });
@@ -168,7 +165,7 @@ runWithDatabase("credentials authentication", () => {
       user: {
         id: enabledUserId,
         employeeId: enabledUsername,
-        roles: ["MENTOR", "TRAINEE"],
+        roles: ["TRAINEE"],
         traineeId,
         enabled: true,
       },

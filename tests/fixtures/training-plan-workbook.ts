@@ -13,7 +13,6 @@ const HEADERS = [
   "Drill",
 ] as const;
 
-const dimensions = ["Dall", "D1", "D2", "D3", "D4"] as const;
 const dimensionNames = {
   Dall: "通用能力",
   D1: "方向一",
@@ -21,6 +20,14 @@ const dimensionNames = {
   D3: "方向三",
   D4: "方向四",
 } as const;
+
+const dimensionForDay = (day: number): keyof typeof dimensionNames => {
+  if (day <= 43) return "Dall";
+  if (day <= 56) return "D1";
+  if (day <= 63) return "D2";
+  if (day <= 76) return "D3";
+  return "D4";
+};
 
 export const trainingPlanTaskName = (day: number): string =>
   day === 1
@@ -35,7 +42,7 @@ const stageForDay = (day: number): string => {
 };
 
 const rowForDay = (day: number): readonly unknown[] => {
-  const dimension = dimensions[(day - 1) % dimensions.length] ?? "Dall";
+  const dimension = dimensionForDay(day);
   const milestone = day === 50 ? "符合上岗要求\n第一次提问题单" : "";
   const reference = day === 8
     ? "公开示例 SOP\n公开示例预约"
@@ -58,7 +65,7 @@ const rowForDay = (day: number): readonly unknown[] => {
     reference,
     referenceLink,
     day <= 80 ? `完成第 ${day} 天 Action 示例` : "",
-    day <= 23 ? `完成第 ${day} 天 Drill 示例` : "",
+    day >= 24 && day <= 46 ? `完成第 ${day} 天 Drill 示例` : "",
   ];
 };
 

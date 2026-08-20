@@ -52,6 +52,15 @@ describe("parseTrainingPlan", () => {
     expect(new Set(result.rows.map((row) => row.dimension))).toEqual(
       new Set(["Dall", "D1", "D2", "D3", "D4"]),
     );
+    expect(Object.fromEntries(
+      ["Dall", "D1", "D2", "D3", "D4"].map((dimension) => [
+        dimension,
+        result.rows.filter((row) => row.dimension === dimension).length,
+      ]),
+    )).toEqual({ Dall: 43, D1: 13, D2: 7, D3: 13, D4: 14 });
+    expect(result.rows.find((row) => row.action)?.stableImportKey).not.toBe(
+      result.rows.find((row) => row.drill)?.stableImportKey,
+    );
     expect(result.rows[0]).toMatchObject({
       stableImportKey: "PLAN_V1-DAY-001",
       day: 1,
