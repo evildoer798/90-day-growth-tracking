@@ -43,13 +43,13 @@ runWithDatabase("credentials authentication", () => {
     const trainee = await prisma.trainee.create({
       data: {
         name: "Task 6 Auth Trainee",
-        employeeId: `${usernamePrefix}-trainee-record`,
+        employeeId: `${usernamePrefix}-TRAINEE-RECORD`,
         focusGroup: "D1",
         trainingStartDate: new Date("2026-08-14T00:00:00.000Z"),
       },
     });
     traineeId = trainee.id;
-    enabledUsername = `${usernamePrefix}-enabled`;
+    enabledUsername = `${usernamePrefix}-ENABLED`;
     const enabledUser = await prisma.user.create({
       data: {
         username: enabledUsername,
@@ -62,7 +62,7 @@ runWithDatabase("credentials authentication", () => {
     });
     enabledUserId = enabledUser.id;
 
-    disabledUsername = `${usernamePrefix}-disabled`;
+    disabledUsername = `${usernamePrefix}-DISABLED`;
     await prisma.user.create({
       data: {
         username: disabledUsername,
@@ -72,7 +72,7 @@ runWithDatabase("credentials authentication", () => {
       },
     });
 
-    invalidHashUsername = `${usernamePrefix}-invalid-hash`;
+    invalidHashUsername = `${usernamePrefix}-INVALID-HASH`;
     await prisma.user.create({
       data: {
         username: invalidHashUsername,
@@ -81,7 +81,7 @@ runWithDatabase("credentials authentication", () => {
       },
     });
 
-    unsupportedCostUsername = `${usernamePrefix}-cost4`;
+    unsupportedCostUsername = `${usernamePrefix}-COST4`;
     await prisma.user.create({
       data: {
         username: unsupportedCostUsername,
