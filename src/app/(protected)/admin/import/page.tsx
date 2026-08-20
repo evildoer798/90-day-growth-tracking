@@ -1,0 +1,2 @@
+import { AdminPageHeader } from "@/features/admin/admin-page-header";import { ImportWorkspace } from "@/features/import-export/import-workspace";import { getActor } from "@/server/auth/get-actor";import { requireManageUsers } from "@/server/auth/require-permission";
+export default async function AdminImportPage(){const actor=await getActor();requireManageUsers(actor);return <section className="role-dashboard"><AdminPageHeader title="Excel 导入"/><ImportWorkspace/></section>}

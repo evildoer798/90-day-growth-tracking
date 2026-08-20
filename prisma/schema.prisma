@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleCode {
+  ADMIN
+  SUPERVISOR
+  MENTOR
+  TRAINEE
+}
+
+enum FocusGroup {
+  D1
+  D2
+  D3
+  D4
+}
+
+enum RelationType {
+  MENTOR
+  SUPERVISOR
+}
+
+enum TaskDimension {
+  D1
+  D2
+  D3
+  D4
+  Dall
+}
+
+enum ConfirmationKind {
+  ACTION_CONFIRMED
+  ACTION_UNCONFIRMED
+  DRILL_CONFIRMED
+  DRILL_UNCONFIRMED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  ENABLE
+  DISABLE
+  CONFIRM
+  UNCONFIRM
+  IMPORT
+  EXPORT
+  LOGIN
+}
+
+enum ImportStatus {
+  PENDING
+  PREVIEWED
+  APPLIED
+  FAILED
+}
+
+model User {
+  id                    String                @id @default(cuid())
+  username              String                @unique
+  passwordHash          String
+  enabled               Boolean               @default(true)
+  traineeId             String?               @unique
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  trainee               Trainee?              @relation(fields: [traineeId], references: [id], onDelete: SetNull)
+  roles                 UserRole[]
+  traineeRelations      UserTraineeRelation[]
+  actionConfirmations   TaskProgress[]        @relation("ActionConfirmedBy")
+  drillConfirmations    TaskProgress[]        @relation("DrillConfirmedBy")
+  confirmationEvents    ConfirmationEvent[]   @relation("ConfirmationActor")
+  taskVersions          TaskVersion[]         @relation("TaskVersionActor")
+  auditLogs             AuditLog[]            @relation("AuditActor")
+  operatedImportBatches ImportBatch[]         @relation("ImportOperator")
+}
+
+model Role {
+  id        String     @id @default(cuid())
+  code      RoleCode   @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     UserRole[]
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model Trainee {
+  id                  String                @id @default(cuid())
+  name                String
+  employeeId          String                @unique
+  focusGroup          FocusGroup
+  trainingStartDate   DateTime              @db.Date
+  trainingDayOverride Int?
+  enabled             Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  user                User?
+  userRelations       UserTraineeRelation[]
+  taskProgress        TaskProgress[]
+  confirmationEvents  ConfirmationEvent[]
+
+  @@index([employeeId, enabled])
+}
+
+model TrainingPlanSettings {
+  id           String   @id @default("default")
+  durationDays Int      @default(90)
+  revision     Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model UserTraineeRelation {
+  id        String       @id @default(cuid())
+  userId    String
+  traineeId String
+  type      RelationType
+  isPrimary Boolean      @default(false)
+  enabled   Boolean      @default(true)
+  startDate DateTime     @db.Date
+  endDate   DateTime?    @db.Date
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  trainee   Trainee      @relation(fields: [traineeId], references: [id], onDelete: Restrict)
+
+  @@index([userId, enabled, type])
+  @@index([traineeId, enabled, type])
+  @@index([traineeId, type, enabled])
+}
+
+model TrainingTask {
+  id                 String              @id @default(cuid())
+  stableImportKey    String              @unique
+  milestone          String?
+  day                Int
+  stage              String
+  dimension          TaskDimension
+  dimensionName      String
+  task               String
+  action             String?
+  drill              String?
+  sortOrder          Int
+  enabled            Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  references         TaskReference[]
+  progress           TaskProgress[]
+  confirmationEvents ConfirmationEvent[]
+  versions           TaskVersion[]
+
+  @@index([day, stage, dimension])
+  @@index([enabled, sortOrder])
+}
+
+model TaskReference {
+  id        String       @id @default(cuid())
+  taskId    String
+  title     String
+  url       String
+  sortOrder Int
+  task      TrainingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, sortOrder])
+}
+
+model TaskProgress {
+  id                  String       @id @default(cuid())
+  traineeId           String
+  taskId              String
+  learnDone           Boolean      @default(false)
+  learnAt             DateTime?
+  actionSubmitted     Boolean      @default(false)
+  actionSubmittedAt   DateTime?
+  actionConfirmed     Boolean      @default(false)
+  actionConfirmedAt   DateTime?
+  actionConfirmedById String?
+  drillSubmitted      Boolean      @default(false)
+  drillSubmittedAt    DateTime?
+  drillConfirmed      Boolean      @default(false)
+  drillConfirmedAt    DateTime?
+  drillConfirmedById  String?
+  feedback            String?
+  traineeNote         String?
+  mentorNote          String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  trainee             Trainee      @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  task                TrainingTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  actionConfirmedBy   User?        @relation("ActionConfirmedBy", fields: [actionConfirmedById], references: [id], onDelete: Restrict)
+  drillConfirmedBy    User?        @relation("DrillConfirmedBy", fields: [drillConfirmedById], references: [id], onDelete: Restrict)
+
+  @@unique([traineeId, taskId])
+  @@index([taskId])
+  @@index([actionConfirmedById])
+  @@index([drillConfirmedById])
+}
+
+model ConfirmationEvent {
+  id        String           @id @default(cuid())
+  traineeId String
+  taskId    String
+  kind      ConfirmationKind
+  actorId   String
+  note      String?
+  createdAt DateTime         @default(now())
+  trainee   Trainee          @relation(fields: [traineeId], references: [id], onDelete: Restrict)
+  task      TrainingTask     @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  actor     User             @relation("ConfirmationActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([traineeId, taskId, createdAt])
+  @@index([actorId])
+}
+
+model TaskVersion {
+  id        String       @id @default(cuid())
+  taskId    String
+  before    Json
+  after     Json
+  actorId   String
+  createdAt DateTime     @default(now())
+  task      TrainingTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  actor     User         @relation("TaskVersionActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([taskId, createdAt])
+  @@index([actorId])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  action    AuditAction
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  actorId   String
+  requestId String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+  actor     User        @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@index([actorId])
+}
+
+model ImportBatch {
+  id         String       @id @default(cuid())
+  checksum   String
+  fileName   String
+  status     ImportStatus @default(PENDING)
+  preview    Json?
+  result     Json?
+  operatorId String
+  nonceHash  String?      @unique
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  operator   User         @relation("ImportOperator", fields: [operatorId], references: [id], onDelete: Restrict)
+
+  @@index([checksum])
+  @@index([operatorId, createdAt])
+}

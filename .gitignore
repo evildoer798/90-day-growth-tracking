@@ -1,0 +1,32 @@
+.worktrees/
+.superpowers/
+.tools/
+node_modules/
+.next/
+.env*
+!.env.example
+!deploy/**/.env.example
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+output/playwright/
+*.log
+*.tsbuildinfo
+src/generated/prisma/
+backups/
+
+# Company training workbooks stay local; tests generate a public-safe workbook in memory.
+data/imports/*.xlsx
+
+# Local release bundles and one-off deployment artifacts
+deploy/*.tar.gz
+deploy/*.tar.gz.part*
+deploy/upload-review-workflow-*/
+deploy/review-workflow-*.manifest
+deploy/deploy-review-workflow-*.sh
+deploy/resume-global-duration.sh
+
+# Local agent plans and superseded implementation notes
+todo.md
+docs/superpowers/

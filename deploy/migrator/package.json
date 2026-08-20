@@ -1,0 +1,9 @@
+{
+  "name": "@growth-tracking/migrator",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "prisma": "^7.9.1"
+  }
+}
